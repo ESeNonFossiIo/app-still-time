@@ -6,14 +6,17 @@ plugins {
 
 android {
     namespace = "dev.pomo"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "dev.pomo"
+        // The Kotlin package stays dev.pomo; only the installed app id changed for Google Play.
+        applicationId = "org.comichao.pomodoro"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 3
-        versionName = "0.2.1"
+        targetSdk = 36
+        // A plain counter that `make bump` adds 1 to. Play remembers every code ever used, so never reuse or
+        // lower it. See RELEASING.md before changing it.
+        versionCode = 4
+        versionName = "0.3.0"
     }
 
     signingConfigs {

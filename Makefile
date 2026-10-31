@@ -1,4 +1,5 @@
-PKG := dev.pomo
+PKG := org.comichao.pomodoro
+ACTIVITY := dev.pomo.MainActivity
 MODULES := app wear
 
 # Until kotlin-devkit is a submodule: make DEVKIT=../kotlin-devkit <target>

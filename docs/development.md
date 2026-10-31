@@ -132,6 +132,9 @@ notification icons from other apps show. Keep them small (the phone shots are 36
 
 ## Known limits
 
+- The Wear app keeps the screen on (`FLAG_KEEP_SCREEN_ON`) while it is open, because with Always-on display
+  off the watch returns to the watch face when the screen times out. Ambient mode (`AmbientLifecycleObserver`)
+  only applies when Always-on display is on.
 - A notification can flash for a moment before it is snoozed.
 - The end-of-session alarm is not exact to the second.
 - Locking the phone during focus uses Android's app pinning. The system shows its own "App is pinned" prompt,

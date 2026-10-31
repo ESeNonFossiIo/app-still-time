@@ -8,17 +8,21 @@ plugins {
 val appGradle = rootProject.file("app/build.gradle.kts").readText()
 val appVersionName = Regex("""versionName\s*=\s*"([^"]+)"""").find(appGradle)!!.groupValues[1]
 val appVersionCode = Regex("""versionCode\s*=\s*(\d+)""").find(appGradle)!!.groupValues[1].toInt()
+// Version code of the watch bundle uploaded to Play: the phone's code plus 1000. See RELEASING.md.
+val playWearVersionCode = appVersionCode + 1_000
 
 android {
     namespace = "dev.pomo.wear"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         // Same id as the phone app, so the Data Layer pairs the two.
-        applicationId = "dev.pomo"
+        applicationId = "org.comichao.pomodoro"
         minSdk = 30
-        targetSdk = 34
-        versionCode = appVersionCode
+        targetSdk = 36
+        // Play wants a different version code per form factor, so bundles for Play (-PplayBundle) use the
+        // phone's code plus 1000. The APK on GitHub keeps the phone's code. See RELEASING.md.
+        versionCode = if (project.hasProperty("playBundle")) playWearVersionCode else appVersionCode
         versionName = appVersionName
     }
 
