@@ -1,4 +1,4 @@
-# Releasing Pomodoro
+# Releasing Still Time
 
 Two apps ship together from this repo: the phone app (`:app`) and the Wear OS app (`:wear`). They share the
 application id `org.comichao.pomodoro` and the same release key. Releases go to GitHub (APKs) and Google Play
@@ -40,7 +40,8 @@ Rules:
 
 ### Codes already used in Play (never reuse)
 
-None yet. Add each code after it is uploaded.
+`4` and `1004` (0.3.0, uploaded before the rename to Still Time, then replaced), `5` and `1005` (0.3.1).
+Next free phone code: `6` (watch `1006`). Add each code after it is uploaded.
 
 ## Releasing
 

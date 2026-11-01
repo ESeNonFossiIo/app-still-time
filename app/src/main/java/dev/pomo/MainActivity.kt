@@ -232,7 +232,7 @@ private fun SettingsScreen(
         }
     }
     Box(Modifier.fillMaxSize().systemBarsPadding().padding(16.dp), contentAlignment = Alignment.BottomCenter) {
-        Text("Pomodoro ${appVersion(c)}", style = MaterialTheme.typography.labelMedium)
+        Text("Still Time ${appVersion(c)}", style = MaterialTheme.typography.labelMedium)
     }
 }
 

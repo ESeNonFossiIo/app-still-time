@@ -1,6 +1,6 @@
 # Development
 
-Notes for building, releasing and changing Pomodoro. For installing and using the app, see the
+Notes for building, releasing and changing Still Time. For installing and using the app, see the
 [README](../README.md).
 
 ## Layout

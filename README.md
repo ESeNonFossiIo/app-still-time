@@ -1,4 +1,4 @@
-# Pomodoro
+# Still Time
 
 A simple pomodoro timer for Android that silences your notifications while you focus.
 
@@ -32,9 +32,9 @@ You need Android 8.0 or newer. The app isn't on the Play Store, so you install i
    `pomodoro-<version>-release.apk`.
 2. Open the downloaded file and install it. Android will ask you to allow installing apps from your browser
    or file manager ("install unknown apps"). Allow it for that app.
-3. Open **Pomodoro** and tap **Grant access** to let it manage notifications. Without this it can't silence
+3. Open **Still Time** and tap **Grant access** to let it manage notifications. Without this it can't silence
    anything.
-   - On Android 13 and newer, if the access setting is greyed out, go to Settings > Apps > Pomodoro, open the
+   - On Android 13 and newer, if the access setting is greyed out, go to Settings > Apps > Still Time, open the
      menu (⋮) and choose **Allow restricted settings**. Then try again.
 
 To check that a download is intact, download `SHA256SUMS` from the same release and run
@@ -98,14 +98,14 @@ Watch apps can't be installed from a file on the watch itself, so you need a com
    adb -s <address>:<port> install pomodoro-wear-<version>-release.apk
    ```
 
-6. Open **Pomodoro** on the watch. Turn Wireless debugging off again afterwards to save battery.
+6. Open **Still Time** on the watch. Turn Wireless debugging off again afterwards to save battery.
 
 Install the phone and watch apps from the same release. They have to be signed with the same key to talk to each
 other.
 
 ## Good to know
 
-- Pomodoro holds notifications back, it doesn't block them: a notification can flash for a moment before it is
+- Still Time holds notifications back, it doesn't block them: a notification can flash for a moment before it is
   snoozed.
 - The end-of-session alert can be a few seconds late, because Android saves battery by batching alarms.
 - Your sessions and settings are stored only on your devices. If you use the watch, the two devices share the

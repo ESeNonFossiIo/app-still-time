@@ -9,7 +9,7 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
-        android:label="Pomodoro"
+        android:label="Still Time"
         android:theme="@android:style/Theme.DeviceDefault">
 
         <!-- Needs the phone app: it owns the timer and blocks the notifications. -->

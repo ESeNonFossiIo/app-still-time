@@ -26,7 +26,7 @@ class AlarmReceiver : BroadcastReceiver() {
             1,
             android.app.Notification.Builder(c, "alerts")
                 .setSmallIcon(R.drawable.ic_stat_pomo)
-                .setContentTitle("Pomodoro")
+                .setContentTitle("Still Time")
                 .setContentText(text)
                 .setContentIntent(open)
                 .setAutoCancel(true)

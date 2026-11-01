@@ -1,10 +1,10 @@
-# Google Play listing: Pomodoro
+# Google Play listing: Still Time
 
 Default language: English (United Kingdom), en-GB. Category: Productivity. Contact email: comichao.dev@gmail.com.
 
 ## App name (max 30)
 
-Pomodoro
+Still Time
 
 ## Short description (max 80)
 
@@ -12,7 +12,7 @@ A pomodoro timer that holds back your notifications while you focus.
 
 ## Full description (max 4000)
 
-Pomodoro is a simple focus timer that keeps your phone quiet while you work.
+Still Time is a simple focus timer that keeps your phone quiet while you work.
 
 Start a focus session with one tap. Notifications from every app are held back until the session ends, then
 they come back. Calls, alarms and navigation always get through, and you choose which other apps are never
@@ -39,7 +39,7 @@ PRIVATE BY DESIGN
 • Your sessions and settings stay on your devices
 • Phone and watch talk directly through Wear OS's built-in data link
 
-Pomodoro needs notification access to hold notifications back during a session. It does not read, store or
+Still Time needs notification access to hold notifications back during a session. It does not read, store or
 send their content; it only snoozes them until the session ends.
 
 Source code: https://github.com/ESeNonFossiIo/app-pomodoro
