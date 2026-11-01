@@ -1,6 +1,6 @@
 # Still Time
 
-A simple pomodoro timer for Android that silences your notifications while you focus.
+A simple focus timer for Android that silences your notifications while you focus.
 
 - Start a focus session with one tap. Notifications from every app are held back until it ends.
 - Pick how long to focus and rest, and tag each session (work, study, gym...).
@@ -28,8 +28,8 @@ Watch (Wear OS):
 
 You need Android 8.0 or newer. The app isn't on the Play Store, so you install it from a file.
 
-1. Open the [latest release](https://github.com/ESeNonFossiIo/app-pomodoro/releases/latest) on your phone and download
-   `pomodoro-<version>-release.apk`.
+1. Open the [latest release](https://github.com/ESeNonFossiIo/app-still-time/releases/latest) on your phone and download
+   `still-time-<version>-release.apk`.
 2. Open the downloaded file and install it. Android will ask you to allow installing apps from your browser
    or file manager ("install unknown apps"). Allow it for that app.
 3. Open **Still Time** and tap **Grant access** to let it manage notifications. Without this it can't silence
@@ -79,7 +79,7 @@ the app to let the watch sleep again. With Always-on display turned on, the time
 Watch apps can't be installed from a file on the watch itself, so you need a computer with
 [adb](https://developer.android.com/tools/releases/platform-tools):
 
-1. Download `pomodoro-wear-<version>-release.apk` from the latest release.
+1. Download `still-time-wear-<version>-release.apk` from the latest release.
 2. Turn on developer mode on the watch:
    - Most Wear OS watches: Settings > System > About > Versions, tap **Build number** 7 times.
    - Galaxy Watch: Settings > About watch > Software, tap **Software version** 5 times.
@@ -95,7 +95,7 @@ Watch apps can't be installed from a file on the watch itself, so you need a com
 
    ```bash
    adb connect <address>:<port>
-   adb -s <address>:<port> install pomodoro-wear-<version>-release.apk
+   adb -s <address>:<port> install still-time-wear-<version>-release.apk
    ```
 
 6. Open **Still Time** on the watch. Turn Wireless debugging off again afterwards to save battery.

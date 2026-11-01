@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -25,7 +25,7 @@ class AlarmReceiver : BroadcastReceiver() {
         nm.notify(
             1,
             android.app.Notification.Builder(c, "alerts")
-                .setSmallIcon(R.drawable.ic_stat_pomo)
+                .setSmallIcon(R.drawable.ic_stat_stilltime)
                 .setContentTitle("Still Time")
                 .setContentText(text)
                 .setContentIntent(open)

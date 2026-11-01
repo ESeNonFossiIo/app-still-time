@@ -12,12 +12,12 @@ val appVersionCode = Regex("""versionCode\s*=\s*(\d+)""").find(appGradle)!!.grou
 val playWearVersionCode = appVersionCode + 1_000
 
 android {
-    namespace = "dev.pomo.wear"
+    namespace = "org.comichao.stilltime.wear"
     compileSdk = 36
 
     defaultConfig {
         // Same id as the phone app, so the Data Layer pairs the two.
-        applicationId = "org.comichao.pomodoro"
+        applicationId = "org.comichao.stilltime"
         minSdk = 30
         targetSdk = 36
         // Play wants a different version code per form factor, so bundles for Play (-PplayBundle) use the
@@ -47,8 +47,8 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 
-// APKs are named pomodoro-wear-<versionName>-<variant>.apk
-base.archivesName.set("pomodoro-wear-$appVersionName")
+// APKs are named still-time-wear-<versionName>-<variant>.apk
+base.archivesName.set("still-time-wear-$appVersionName")
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))

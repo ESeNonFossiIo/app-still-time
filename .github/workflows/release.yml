@@ -58,4 +58,4 @@ jobs:
           cp app/build/outputs/apk/release/*.apk wear/build/outputs/apk/release/*.apk dist/
           (cd dist && sha256sum *.apk > SHA256SUMS)
           gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "Pomodoro $GITHUB_REF_NAME" --generate-notes
+            --title "Still Time $GITHUB_REF_NAME" --generate-notes

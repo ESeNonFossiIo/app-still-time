@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.app.Notification
 import android.service.notification.NotificationListenerService

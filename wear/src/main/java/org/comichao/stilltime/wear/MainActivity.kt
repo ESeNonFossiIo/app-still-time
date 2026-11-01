@@ -1,4 +1,4 @@
-package dev.pomo.wear
+package org.comichao.stilltime.wear
 
 import android.app.Activity
 import android.content.Context
@@ -49,15 +49,15 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.delay
 
-private const val STATE = "/pomo/state"
-private const val START = "/pomo/start"
-private const val STOP = "/pomo/stop"
-private const val BREAK = "/pomo/break"
-private const val SYNC = "/pomo/sync"
-private const val PHONE_CAPABILITY = "pomodoro_phone"
+private const val STATE = "/stilltime/state"
+private const val START = "/stilltime/start"
+private const val STOP = "/stilltime/stop"
+private const val BREAK = "/stilltime/break"
+private const val SYNC = "/stilltime/sync"
+private const val PHONE_CAPABILITY = "stilltime_phone"
 
 /** What the phone last told us. The phone owns the timer. */
-private data class PomoState(
+private data class TimerState(
     val phase: String,
     val endAt: Long,
     val totalMs: Long,
@@ -65,7 +65,7 @@ private data class PomoState(
     val minutes: Int,
 )
 
-private fun DataMap.toState() = PomoState(
+private fun DataMap.toState() = TimerState(
     phase = getString("phase", "IDLE"),
     endAt = getLong("endAt"),
     totalMs = getLong("totalMs"),
@@ -97,7 +97,7 @@ private fun send(c: Context, nodeIds: Set<String>, path: String) {
 @Composable
 private fun Watch(ambient: Boolean, tick: Long) {
     val c = LocalContext.current
-    var state by remember { mutableStateOf<PomoState?>(null) }
+    var state by remember { mutableStateOf<TimerState?>(null) }
     var phoneNodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     val connected = phoneNodes.isNotEmpty()

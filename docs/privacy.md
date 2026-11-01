@@ -2,14 +2,14 @@
 
 _Last updated: 2026-11-01_
 
-Still Time is a free, open-source focus timer for Android and Wear OS (package `org.comichao.pomodoro`). This
+Still Time is a free, open-source focus timer for Android and Wear OS (package `org.comichao.stilltime`). This
 policy explains what the app does with your information. The short version: **it stays on your devices, and we
 never receive it.**
 
 ## Who is responsible
 
 Still Time is published by Mauro Bardelloni. Contact: comichao.dev@gmail.com, or
-[open an issue](https://github.com/ESeNonFossiIo/app-pomodoro/issues).
+[open an issue](https://github.com/ESeNonFossiIo/app-still-time/issues).
 
 ## What the app stores
 

@@ -5,18 +5,17 @@ plugins {
 }
 
 android {
-    namespace = "dev.pomo"
+    namespace = "org.comichao.stilltime"
     compileSdk = 36
 
     defaultConfig {
-        // The Kotlin package stays dev.pomo; only the installed app id changed for Google Play.
-        applicationId = "org.comichao.pomodoro"
+        applicationId = "org.comichao.stilltime"
         minSdk = 26
         targetSdk = 36
         // A plain counter that `make bump` adds 1 to. Play remembers every code ever used, so never reuse or
         // lower it. See RELEASING.md before changing it.
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 6
+        versionName = "0.4.0"
     }
 
     signingConfigs {
@@ -41,8 +40,8 @@ android {
     kotlinOptions { jvmTarget = "17" }
 }
 
-// APKs are named pomodoro-<versionName>-<variant>.apk
-base.archivesName.set(provider { "pomodoro-${android.defaultConfig.versionName}" })
+// APKs are named still-time-<versionName>-<variant>.apk
+base.archivesName.set(provider { "still-time-${android.defaultConfig.versionName}" })
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))

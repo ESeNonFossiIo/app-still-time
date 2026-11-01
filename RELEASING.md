@@ -1,12 +1,17 @@
 # Releasing Still Time
 
 Two apps ship together from this repo: the phone app (`:app`) and the Wear OS app (`:wear`). They share the
-application id `org.comichao.pomodoro` and the same release key. Releases go to GitHub (APKs) and Google Play
+application id `org.comichao.stilltime` and the same release key. Releases go to GitHub (APKs) and Google Play
 (app bundles). Read this before touching a version number: Play never forgets a version code.
 
-The Kotlin package is still `dev.pomo` (source folders, `namespace`, `ACTIVITY` in the Makefile). Only the
-installed application id changed, in 0.3.0, for Google Play. GitHub releases up to v0.2.1 used `dev.pomo`, so
-those installs are a different app on the device and are not updated by 0.3.0 or later.
+The application id and the Kotlin package are both `org.comichao.stilltime` since 0.4.0. Earlier ids are
+different apps on the device and are not updated by 0.4.0 or later:
+
+| Versions | Application id | Where |
+|---|---|---|
+| up to 0.2.1 | `dev.pomo` | GitHub (releases deleted) |
+| 0.3.0, 0.3.1 | `org.comichao.pomodoro` | GitHub, and a Play app whose closed tracks are paused |
+| 0.4.0 and later | `org.comichao.stilltime` | GitHub and Play |
 
 ## Version name
 
@@ -36,12 +41,15 @@ Rules:
    A rebuilt bundle needs a new code.
 2. **Codes only go up.** A device is only offered an update whose code is higher than the installed one.
 3. **Keep the jump small.** Play flags a code far above the previous one. Counting up by 1 never trips it.
-4. Codes `1`-`3` were used by the GitHub releases (`dev.pomo`). Play starts at `4` (watch `1004`).
+4. The counter carries on across the id changes: `1`-`3` were `dev.pomo`, `4`-`5` were `org.comichao.pomodoro`,
+   and `org.comichao.stilltime` starts at `6` (watch `1006`).
 
 ### Codes already used in Play (never reuse)
 
-`4` and `1004` (0.3.0, uploaded before the rename to Still Time, then replaced), `5` and `1005` (0.3.1).
-Next free phone code: `6` (watch `1006`). Add each code after it is uploaded.
+- `org.comichao.stilltime`: none yet. Next free phone code: `6` (watch `1006`).
+- `org.comichao.pomodoro` (old app): `4` and `1004` (0.3.0), `5` and `1005` (0.3.1).
+
+Add each code after it is uploaded.
 
 ## Releasing
 
@@ -57,8 +65,8 @@ Start with a clean, committed and pushed tree: `make publish` refuses to run oth
    make --eval='bundle: ; $(GRADLE) :app:bundleRelease :wear:bundleRelease -PplayBundle -q' bundle
    ```
 
-   The files are `app/build/outputs/bundle/release/pomodoro-<version>-release.aab` and
-   `wear/build/outputs/bundle/release/pomodoro-wear-<version>-release.aab`. Copy them to
+   The files are `app/build/outputs/bundle/release/still-time-<version>-release.aab` and
+   `wear/build/outputs/bundle/release/still-time-wear-<version>-release.aab`. Copy them to
    `releases/play-upload-<version>/` (hidden from git) before uploading.
 5. In Play Console, upload the phone bundle to the phone track and the watch bundle to the Wear OS track
    (switch the form factor at the top of Test and release). Add release notes, start the rollout, and submit from

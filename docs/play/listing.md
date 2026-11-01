@@ -8,7 +8,7 @@ Still Time
 
 ## Short description (max 80)
 
-A pomodoro timer that holds back your notifications while you focus.
+A focus timer that holds back your notifications until you're done.
 
 ## Full description (max 4000)
 
@@ -42,7 +42,7 @@ PRIVATE BY DESIGN
 Still Time needs notification access to hold notifications back during a session. It does not read, store or
 send their content; it only snoozes them until the session ends.
 
-Source code: https://github.com/ESeNonFossiIo/app-pomodoro
+Source code: https://github.com/ESeNonFossiIo/app-still-time
 
 ## Graphics (in this folder)
 

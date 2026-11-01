@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.content.Context
 import android.content.Intent

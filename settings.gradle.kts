@@ -11,6 +11,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "pomodoro"
+rootProject.name = "still-time"
 include(":app")
 include(":wear")

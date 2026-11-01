@@ -18,7 +18,7 @@ jobs:
       - run: gradle assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: pomodoro-debug
+          name: still-time-debug
           path: |
             app/build/outputs/apk/debug/*.apk
             wear/build/outputs/apk/debug/*.apk

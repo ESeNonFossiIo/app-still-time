@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.content.ContentValues
 import android.content.Context
@@ -32,7 +32,7 @@ data class Detail(
 
 /** One row per focus session, finished or given up. Home stats count finished ones only. */
 object History {
-    private class Db(c: Context) : SQLiteOpenHelper(c, "pomo.db", null, 3) {
+    private class Db(c: Context) : SQLiteOpenHelper(c, "stilltime.db", null, 3) {
         override fun onCreate(db: SQLiteDatabase) {
             db.execSQL(
                 "CREATE TABLE sessions(ts INTEGER NOT NULL, " +

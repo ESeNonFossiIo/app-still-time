@@ -1,5 +1,6 @@
-PKG := org.comichao.pomodoro
-ACTIVITY := dev.pomo.MainActivity
+PKG := org.comichao.stilltime
+ACTIVITY := org.comichao.stilltime.MainActivity
+APP_NAME := Still Time
 MODULES := app wear
 
 # Until kotlin-devkit is a submodule: make DEVKIT=../kotlin-devkit <target>

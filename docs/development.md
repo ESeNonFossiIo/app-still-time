@@ -13,7 +13,7 @@ Notes for building, releasing and changing Still Time. For installing and using 
 | `docs/` | This file and the README screenshots |
 | `.github/workflows/` | `debug.yml` (every push) and `release.yml` (`v*` tags) |
 
-Phone code, in `app/src/main/java/dev/pomo/`:
+Phone code, in `app/src/main/java/org/comichao/stilltime/`:
 
 - `Timer.kt`: the timer state machine (`IDLE`, `FOCUS`, `BREAK`, `DONE`), stored in SharedPreferences so the
   UI, the alarm, the notification listener and the watch all read the same state. `settle()` moves finished
@@ -36,7 +36,7 @@ make debug                    # same, through the devkit
 make phone                    # build, install on the connected phone, launch
 ```
 
-APKs are named `pomodoro-<versionName>-<variant>.apk` (phone) and `pomodoro-wear-<versionName>-<variant>.apk`
+APKs are named `still-time-<versionName>-<variant>.apk` (phone) and `still-time-wear-<versionName>-<variant>.apk`
 (watch). The watch module reads its version from `app/build.gradle.kts`, so `make bump` covers both.
 
 Machine-specific settings (`JAVA_HOME`, `ANDROID_HOME`, signing keys, the watch address) go in a git-ignored
@@ -53,11 +53,11 @@ Other devkit targets: `make logcat`, `make logcat-save`, `make run`, `make clean
 
 ## Wear OS
 
-The phone owns the timer. It publishes its state as a Wearable Data Layer item (`/pomo/state`: phase, end time,
-total length, category, focus and break minutes) every time it changes. The watch sends `/pomo/start`,
-`/pomo/stop`, `/pomo/break` and `/pomo/sync` messages back, and the phone applies them even when its UI isn't
-open. The phone declares a `pomodoro_phone` capability so the watch can tell whether the phone app is installed
-and reachable. Both apps use the application id `dev.pomo` and must be signed with the same key.
+The phone owns the timer. It publishes its state as a Wearable Data Layer item (`/stilltime/state`: phase, end time,
+total length, category, focus and break minutes) every time it changes. The watch sends `/stilltime/start`,
+`/stilltime/stop`, `/stilltime/break` and `/stilltime/sync` messages back, and the phone applies them even when its UI isn't
+open. The phone declares a `stilltime_phone` capability so the watch can tell whether the phone app is installed
+and reachable. Both apps use the application id `org.comichao.stilltime` and must be signed with the same key.
 
 Install on a watch over wireless debugging (no store needed):
 
@@ -122,7 +122,7 @@ printf '<alias>' | gh secret set KEY_ALIAS
 gh variable set RELEASE_CERT_SHA256 --body '<sha256>'
 ```
 
-The `debug` workflow builds debug APKs on every branch push and uploads them as the `pomodoro-debug`
+The `debug` workflow builds debug APKs on every branch push and uploads them as the `still-time-debug`
 artifact. Those are signed with a throwaway key, so they can't be installed over a release.
 
 ## README screenshots

@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.Manifest
 import android.content.Context
@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             // A finished focus session inverts the palette until the user taps.
-            PomoTheme(mode, inverted = phase == Phase.DONE) {
+            StillTimeTheme(mode, inverted = phase == Phase.DONE) {
                 Surface(Modifier.fillMaxSize()) {
                     App(mode, phase, onMode = { mode = it; Timer.setThemeMode(this, it) })
                 }
@@ -606,7 +606,7 @@ private fun StatsScreen(onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         ScreenHeader("Stats", onBack) {
-            TextButton(onClick = { export.launch("pomodoro-sessions.csv") }) { Text("Export CSV") }
+            TextButton(onClick = { export.launch("still-time-sessions.csv") }) { Text("Export CSV") }
         }
         LazyColumn(Modifier.padding(horizontal = 16.dp), contentPadding = PaddingValues(bottom = 24.dp)) {
             item {

@@ -2,6 +2,6 @@
 <resources>
     <!-- Lets a paired watch check that this app is installed and reachable. -->
     <string-array name="android_wear_capabilities">
-        <item>pomodoro_phone</item>
+        <item>stilltime_phone</item>
     </string-array>
 </resources>

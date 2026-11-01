@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -16,7 +16,7 @@ object Timer {
     const val MAX_MINUTES = 120
     val DEFAULT_CATEGORIES = listOf("Work", "Study", "Reading", "Other")
 
-    private fun prefs(c: Context) = c.getSharedPreferences("pomo", Context.MODE_PRIVATE)
+    private fun prefs(c: Context) = c.getSharedPreferences("stilltime", Context.MODE_PRIVATE)
 
     fun phase(c: Context) = Phase.valueOf(prefs(c).getString("phase", "IDLE")!!)
     fun endAt(c: Context) = prefs(c).getLong("endAt", 0)

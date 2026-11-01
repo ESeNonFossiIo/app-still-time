@@ -1,4 +1,4 @@
-package dev.pomo
+package org.comichao.stilltime
 
 import android.content.Context
 import com.google.android.gms.wearable.MessageEvent
@@ -12,11 +12,11 @@ import com.google.android.gms.wearable.WearableListenerService
  * without Play Services or without a watch just does nothing.
  */
 object WearSync {
-    const val STATE = "/pomo/state"
-    const val START = "/pomo/start"
-    const val STOP = "/pomo/stop"
-    const val BREAK = "/pomo/break"
-    const val SYNC = "/pomo/sync"
+    const val STATE = "/stilltime/state"
+    const val START = "/stilltime/start"
+    const val STOP = "/stilltime/stop"
+    const val BREAK = "/stilltime/break"
+    const val SYNC = "/stilltime/sync"
 
     fun publish(c: Context) {
         runCatching {

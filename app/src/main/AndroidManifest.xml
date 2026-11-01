@@ -51,7 +51,7 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/pomo" />
+                    android:pathPrefix="/stilltime" />
             </intent-filter>
         </service>
 
