@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import androidx.core.content.edit
 
 /** DONE: a focus session ended and the timer keeps counting up until the user taps. */
 enum class Phase { IDLE, FOCUS, BREAK, DONE }
@@ -36,33 +37,33 @@ object Timer {
 
     fun excluded(c: Context): Set<String> = prefs(c).getStringSet("excluded", emptySet())!!
     fun setExcluded(c: Context, pkgs: Set<String>) =
-        prefs(c).edit().putStringSet("excluded", pkgs).apply()
+        prefs(c).edit { putStringSet("excluded", pkgs) }
 
     /** Selected focus length, used by the next session. */
     fun minutes(c: Context) = prefs(c).getInt("minutes", 25)
     fun setMinutes(c: Context, m: Int) {
-        prefs(c).edit().putInt("minutes", m.coerceIn(MIN_MINUTES, MAX_MINUTES)).apply()
+        prefs(c).edit { putInt("minutes", m.coerceIn(MIN_MINUTES, MAX_MINUTES)) }
         WearSync.publish(c)
     }
 
     /** Whether a focus session takes over the screen. On by default. */
     fun fullscreenFocus(c: Context) = prefs(c).getBoolean("fullscreenFocus", true)
     fun setFullscreenFocus(c: Context, on: Boolean) =
-        prefs(c).edit().putBoolean("fullscreenFocus", on).apply()
+        prefs(c).edit { putBoolean("fullscreenFocus", on) }
 
     fun themeMode(c: Context): ThemeMode =
         runCatching { ThemeMode.valueOf(prefs(c).getString("theme", null)!!) }.getOrDefault(ThemeMode.COLOR)
-    fun setThemeMode(c: Context, m: ThemeMode) = prefs(c).edit().putString("theme", m.name).apply()
+    fun setThemeMode(c: Context, m: ThemeMode) = prefs(c).edit { putString("theme", m.name) }
 
     /** The user ticked "Don't show again" on the app-pinning warning. */
     fun hidePinWarning(c: Context) = prefs(c).getBoolean("hidePinWarning", false)
     fun setHidePinWarning(c: Context, hide: Boolean) =
-        prefs(c).edit().putBoolean("hidePinWarning", hide).apply()
+        prefs(c).edit { putBoolean("hidePinWarning", hide) }
 
     /** Selected break length, used after the next focus session. */
     fun breakMinutes(c: Context) = prefs(c).getInt("breakMinutes", 5)
     fun setBreakMinutes(c: Context, m: Int) {
-        prefs(c).edit().putInt("breakMinutes", m.coerceIn(MIN_BREAK, MAX_BREAK)).apply()
+        prefs(c).edit { putInt("breakMinutes", m.coerceIn(MIN_BREAK, MAX_BREAK)) }
         WearSync.publish(c)
     }
 
@@ -72,7 +73,7 @@ object Timer {
     /** Selected category, used by the next session. */
     fun category(c: Context) = prefs(c).getString("category", DEFAULT_CATEGORIES[0])!!
     fun setCategory(c: Context, name: String) {
-        prefs(c).edit().putString("category", name).apply()
+        prefs(c).edit { putString("category", name) }
         WearSync.publish(c)
     }
 
@@ -83,7 +84,7 @@ object Timer {
     fun addCategory(c: Context, name: String) {
         val n = name.trim()
         if (n.isEmpty() || categories(c).any { it.equals(n, ignoreCase = true) }) return
-        prefs(c).edit().putString("categories", (categories(c) + n).joinToString("\n")).apply()
+        prefs(c).edit { putString("categories", (categories(c) + n).joinToString("\n")) }
         setCategory(c, n)
     }
 
@@ -91,7 +92,7 @@ object Timer {
     fun removeCategory(c: Context, name: String) {
         val left = categories(c) - name
         if (left.isEmpty()) return
-        prefs(c).edit().putString("categories", left.joinToString("\n")).apply()
+        prefs(c).edit { putString("categories", left.joinToString("\n")) }
         if (category(c) == name) setCategory(c, left[0])
     }
 
@@ -106,17 +107,13 @@ object Timer {
     @Synchronized
     fun seedExcluded(c: Context, essential: Set<String>) {
         if (prefs(c).getBoolean("essentialSeeded", false)) return
-        prefs(c).edit()
-            .putStringSet("excluded", excluded(c) + essential)
-            .putBoolean("essentialSeeded", true)
-            .apply()
+        prefs(c).edit { putStringSet("excluded", excluded(c) + essential); putBoolean("essentialSeeded", true) }
     }
 
     @Synchronized
     fun start(c: Context) {
         val ms = minutes(c) * 60_000L
-        prefs(c).edit().putString("curCategory", category(c)).putLong("curMs", ms)
-            .putInt("curBreakMinutes", breakMinutes(c)).apply()
+        prefs(c).edit { putString("curCategory", category(c)); putLong("curMs", ms); putInt("curBreakMinutes", breakMinutes(c)) }
         set(c, Phase.FOCUS, System.currentTimeMillis() + ms)
     }
 
@@ -168,7 +165,7 @@ object Timer {
     }
 
     private fun set(c: Context, phase: Phase, end: Long) {
-        prefs(c).edit().putString("phase", phase.name).putLong("endAt", end).apply()
+        prefs(c).edit { putString("phase", phase.name); putLong("endAt", end) }
         val am = c.getSystemService(AlarmManager::class.java)
         val pi = PendingIntent.getBroadcast(
             c, 0, Intent(c, AlarmReceiver::class.java),

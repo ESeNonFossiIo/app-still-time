@@ -1,5 +1,6 @@
 package org.comichao.stilltime
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -9,6 +10,7 @@ import android.service.notification.StatusBarNotification
  * except those from excluded apps, calls, alarms and ongoing notifications.
  */
 class BlockerService : NotificationListenerService() {
+    @SuppressLint("InlinedApi") // constant is inlined at compile time, so it is safe below API 28
     private val passCategories = setOf(
         Notification.CATEGORY_CALL,
         Notification.CATEGORY_ALARM,

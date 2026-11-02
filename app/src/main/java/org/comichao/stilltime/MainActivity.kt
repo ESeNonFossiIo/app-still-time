@@ -11,7 +11,12 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -23,7 +28,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -32,10 +40,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -53,7 +64,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -185,22 +195,19 @@ private fun SettingsScreen(
         MenuItem("Stats and session log", "Totals, categories, history and CSV export", onStats)
         MenuItem("Apps allowed during focus", "Their notifications are never snoozed", onApps)
         SectionHeader("Focus mode", Modifier.padding(horizontal = 16.dp))
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Fullscreen and lock during focus")
-                Text(
-                    "Hide the system bars, keep the screen on and pin the app so you can't " +
-                        "switch to other apps while a focus session runs.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Fullscreen and lock during focus", Modifier.weight(1f).padding(end = 16.dp))
+                Switch(checked = fullscreen, onCheckedChange = {
+                    fullscreen = it
+                    Timer.setFullscreenFocus(c, it)
+                })
             }
-            Switch(checked = fullscreen, onCheckedChange = {
-                fullscreen = it
-                Timer.setFullscreenFocus(c, it)
-            })
+            Text(
+                "Hide the system bars, keep the screen on and pin the app so you can't " +
+                    "switch to other apps while a focus session runs.",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         if (fullscreen && !pinningEnabled(c) && !hidePinWarning) {
             Card(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -251,32 +258,72 @@ private fun rememberNow(): Long {
     return now
 }
 
-/** Label, "−5", value, "+5". */
+/** One length control: a coloured label, round "−" and "+" buttons and a big minute count. */
 @Composable
-private fun Stepper(label: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, Modifier.width(56.dp), style = MaterialTheme.typography.labelLarge)
-        OutlinedButton(onClick = { onChange((value - 5).coerceAtLeast(min)) }) { Text("−5") }
-        Text("$value min", Modifier.width(72.dp), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        OutlinedButton(onClick = { onChange((value + 5).coerceAtMost(max)) }) { Text("+5") }
+private fun LengthPicker(label: String, value: Int, min: Int, max: Int, color: Color, onChange: (Int) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label.uppercase(), style = MaterialTheme.typography.labelLarge, color = color,
+            fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FilledTonalIconButton(onClick = { onChange((value - 5).coerceAtLeast(min)) }, enabled = value > min) {
+                Text("−", style = MaterialTheme.typography.titleLarge)
+            }
+            Column(Modifier.width(60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("$value", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold)
+                Text("min", style = MaterialTheme.typography.labelSmall)
+            }
+            FilledTonalIconButton(onClick = { onChange((value + 5).coerceAtMost(max)) }, enabled = value < max) {
+                Text("+", style = MaterialTheme.typography.titleLarge)
+            }
+        }
     }
 }
 
-/** The time inside a ring that fills as the phase progresses. */
 @Composable
-private fun TimerRing(progress: Float, size: Dp, text: String, fontSize: TextUnit) {
+private fun TimerRing(
+    progress: Float, size: Dp, text: String, fontSize: TextUnit,
+    barColor: Color = MaterialTheme.colorScheme.primary, caption: String? = null, onClick: (() -> Unit)? = null,
+) {
     val p by animateFloatAsState(progress, tween(500, easing = LinearEasing), label = "ring")
     val track = MaterialTheme.colorScheme.surfaceVariant
-    val bar = MaterialTheme.colorScheme.primary
-    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+    val bar = barColor
+    val onBar = MaterialTheme.colorScheme.onPrimary
+    val button = onClick != null
+    // A button-like circle breathes gently so it reads as something to press.
+    val pulse by rememberInfiniteTransition(label = "pulse").animateFloat(
+        0f, 1f, infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "pulse",
+    )
+    Box(
+        Modifier.size(size).clip(CircleShape).then(if (button) Modifier.clickable(onClick = onClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
         Canvas(Modifier.fillMaxSize()) {
             val w = 10.dp.toPx()
             val topLeft = Offset(w / 2, w / 2)
             val arc = Size(this.size.width - w, this.size.height - w)
-            drawArc(track, 0f, 360f, false, topLeft, arc, style = Stroke(w))
-            drawArc(bar, -90f, 360f * p, false, topLeft, arc, style = Stroke(w, cap = StrokeCap.Round))
+            if (button) {
+                drawCircle(bar.copy(alpha = 0.10f + 0.10f * pulse), radius = this.size.minDimension / 2 - w)
+                drawArc(bar.copy(alpha = 0.55f + 0.35f * pulse), 0f, 360f, false, topLeft, arc, style = Stroke(w))
+            } else {
+                drawArc(track, 0f, 360f, false, topLeft, arc, style = Stroke(w))
+                drawArc(bar, -90f, 360f * p, false, topLeft, arc, style = Stroke(w, cap = StrokeCap.Round))
+            }
         }
-        Text(text, fontSize = fontSize, fontWeight = FontWeight.Light)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text, fontSize = fontSize, fontWeight = FontWeight.Light)
+            if (caption != null) {
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    Modifier.clip(CircleShape).background(bar).padding(start = 14.dp, end = 20.dp, top = 9.dp, bottom = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = onBar, modifier = Modifier.size(26.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(caption, style = MaterialTheme.typography.titleMedium, color = onBar, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
     }
 }
 
@@ -350,7 +397,6 @@ private fun FullscreenScreen() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeScreen(onSettings: () -> Unit) {
     val c = LocalContext.current
@@ -360,7 +406,7 @@ private fun HomeScreen(onSettings: () -> Unit) {
     var category by remember { mutableStateOf(Timer.category(c)) }
     var categories by remember { mutableStateOf(Timer.categories(c)) }
     var adding by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
     val phase = Timer.phase(c)
     val stats = remember(phase) { History.stats(c) }
 
@@ -376,55 +422,79 @@ private fun HomeScreen(onSettings: () -> Unit) {
             IconButton(onClick = onSettings) { Icon(Icons.Default.Menu, contentDescription = "Settings") }
         }
         if (!listenerEnabled(c)) {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Notification access is off, so nothing will be blocked.")
-                    TextButton(onClick = {
-                        c.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                    }) { Text("Grant access") }
-                }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Notification access is off, so nothing will be blocked.",
+                    Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+                TextButton(onClick = {
+                    c.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                }) { Text("Grant") }
             }
         }
         Spacer(Modifier.weight(1f))
-        Text(phaseLabel(c, phase), style = MaterialTheme.typography.titleMedium)
+        // Focus uses the primary colour and break the tertiary one, so the two phases read differently.
+        val focusColor = MaterialTheme.colorScheme.primary
+        val breakColor = MaterialTheme.colorScheme.tertiary
+        val phaseColor = if (phase == Phase.BREAK) breakColor else focusColor
+        Text(phaseLabel(c, phase), style = MaterialTheme.typography.titleMedium, color = phaseColor, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
-        TimerRing(Timer.progress(c, now), 240.dp, clockText(c, phase, now, minutes), 60.sp)
-        Spacer(Modifier.height(8.dp))
+        // The circle is the main control: tapping it starts a focus session (or the break once focus is done).
+        TimerRing(
+            Timer.progress(c, now), 240.dp, clockText(c, phase, now, minutes), 60.sp,
+            barColor = phaseColor,
+            caption = when (phase) { Phase.IDLE -> "Start focus"; Phase.DONE -> "Start break"; else -> null },
+            onClick = when (phase) {
+                Phase.IDLE -> ({ Timer.start(c) })
+                Phase.DONE -> ({ Timer.startBreak(c) })
+                else -> null
+            },
+        )
+        Spacer(Modifier.height(16.dp))
         if (phase == Phase.IDLE) {
-            Stepper("Focus", minutes, Timer.MIN_MINUTES, Timer.MAX_MINUTES) {
-                minutes = it; Timer.setMinutes(c, it)
-            }
-            Stepper("Break", breakMin, Timer.MIN_BREAK, Timer.MAX_BREAK) {
-                breakMin = it; Timer.setBreakMinutes(c, it)
-            }
-            FlowRow(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            ) {
-                categories.forEach { name ->
-                    FilterChip(
-                        selected = !editing && name == category,
-                        onClick = {
-                            if (editing) {
-                                Timer.removeCategory(c, name)
-                                categories = Timer.categories(c)
-                                category = Timer.category(c)
-                            } else {
-                                category = name; Timer.setCategory(c, name)
-                            }
-                        },
-                        label = { Text(if (editing) "$name  ✕" else name) },
-                    )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                LengthPicker("Focus", minutes, Timer.MIN_MINUTES, Timer.MAX_MINUTES, focusColor) {
+                    minutes = it; Timer.setMinutes(c, it)
                 }
-                AssistChip(onClick = { adding = true }, label = { Text("+ New") })
-                AssistChip(
-                    onClick = { editing = !editing },
-                    label = { Text(if (editing) "Done" else "Edit") },
-                )
+                LengthPicker("Break", breakMin, Timer.MIN_BREAK, Timer.MAX_BREAK, breakColor) {
+                    breakMin = it; Timer.setBreakMinutes(c, it)
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("CATEGORY", style = MaterialTheme.typography.labelSmall, letterSpacing = 1.sp)
+                Box {
+                FilledTonalButton(onClick = { menuOpen = true }) {
+                    Text(category, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    categories.forEach { name ->
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = { category = name; Timer.setCategory(c, name); menuOpen = false },
+                            trailingIcon = {
+                                if (categories.size > 1) IconButton(onClick = {
+                                    Timer.removeCategory(c, name)
+                                    categories = Timer.categories(c)
+                                    category = Timer.category(c)
+                                }) { Icon(Icons.Default.Close, contentDescription = "Remove $name") }
+                            },
+                        )
+                    }
+                    HorizontalDivider()
+                    DropdownMenuItem(text = { Text("+ New category") }, onClick = { menuOpen = false; adding = true })
+                }
+                }
             }
         }
-        Spacer(Modifier.height(16.dp))
-        PhaseButton(phase)
+        // Idle needs no button: the circle starts the session.
+        if (phase != Phase.IDLE) {
+            Spacer(Modifier.height(16.dp))
+            PhaseButton(phase)
+        }
         Spacer(Modifier.weight(1f))
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -457,7 +527,7 @@ private fun HomeScreen(onSettings: () -> Unit) {
                             )
                     )
                     Text(
-                        day.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                        day.dayOfWeek.getDisplayName(TextStyle.NARROW, LocalLocale.current.platformLocale),
                         style = MaterialTheme.typography.labelSmall,
                     )
                 }
@@ -518,7 +588,7 @@ private fun ActivityChart(daily: List<Pair<java.time.LocalDate, Int>>) {
                     )
                 }
                 Text(
-                    day.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    day.dayOfWeek.getDisplayName(TextStyle.NARROW, LocalLocale.current.platformLocale),
                     Modifier.padding(top = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = if (day == today) FontWeight.Bold else FontWeight.Normal,
@@ -787,8 +857,9 @@ private fun AppRow(pkg: String, label: String, checked: Boolean, onChecked: (Boo
         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val icon by produceState<ImageBitmap?>(AppCatalog.cachedIcon(pkg), pkg) {
-            if (value == null) value = withContext(Dispatchers.Default) { AppCatalog.icon(c, pkg) }
+        var icon by remember(pkg) { mutableStateOf(AppCatalog.cachedIcon(pkg)) }
+        LaunchedEffect(pkg) {
+            if (icon == null) icon = withContext(Dispatchers.Default) { AppCatalog.icon(c, pkg) }
         }
         Box(Modifier.size(40.dp)) {
             icon?.let { Image(it, contentDescription = null, Modifier.fillMaxSize()) }

@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -13,13 +12,13 @@ val playWearVersionCode = appVersionCode + 1_000
 
 android {
     namespace = "org.comichao.stilltime.wear"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         // Same id as the phone app, so the Data Layer pairs the two.
         applicationId = "org.comichao.stilltime"
         minSdk = 30
-        targetSdk = 36
+        targetSdk = 37
         // Play wants a different version code per form factor, so bundles for Play (-PplayBundle) use the
         // phone's code plus 1000. The APK on GitHub keeps the phone's code. See RELEASING.md.
         versionCode = if (project.hasProperty("playBundle")) playWearVersionCode else appVersionCode
@@ -44,18 +43,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 }
 
 // APKs are named still-time-wear-<versionName>-<variant>.apk
 base.archivesName.set("still-time-wear-$appVersionName")
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.wear.compose:compose-material:1.4.0")
-    implementation("androidx.wear.compose:compose-foundation:1.4.0")
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("androidx.wear:wear:1.3.0")
-    implementation("com.google.android.gms:play-services-wearable:18.2.0")
+    implementation("androidx.wear.compose:compose-material:1.7.1")
+    implementation("androidx.wear.compose:compose-foundation:1.7.1")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("androidx.wear:wear:1.4.0")
+    implementation("com.google.android.gms:play-services-wearable:20.0.1")
 }

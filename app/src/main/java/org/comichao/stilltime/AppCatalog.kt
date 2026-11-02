@@ -5,12 +5,13 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.provider.Telephony
 import android.telecom.TelecomManager
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import java.util.concurrent.ConcurrentHashMap
+import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 
 /**
  * Launchable apps and their icons. Loading labels and icons is slow, so it happens off the main
@@ -59,7 +60,7 @@ object AppCatalog {
         val found = HashSet<String>()
         listOf(
             Intent(Intent.ACTION_DIAL),
-            Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:")),
+            Intent(Intent.ACTION_SENDTO, "smsto:".toUri()),
         ).forEach { i -> pm.queryIntentActivities(i, 0).forEach { found += it.activityInfo.packageName } }
         runCatching { c.getSystemService(TelecomManager::class.java).defaultDialerPackage }.getOrNull()?.let { found += it }
         runCatching { Telephony.Sms.getDefaultSmsPackage(c) }.getOrNull()?.let { found += it }
@@ -81,7 +82,7 @@ object AppCatalog {
     }
 
     private fun Drawable.toImageBitmap(size: Int = 80): ImageBitmap {
-        val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bmp = createBitmap(size, size)
         setBounds(0, 0, size, size)
         draw(Canvas(bmp))
         return bmp.asImageBitmap()

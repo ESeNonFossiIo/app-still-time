@@ -1,21 +1,20 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "org.comichao.stilltime"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "org.comichao.stilltime"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         // A plain counter that `make bump` adds 1 to. Play remembers every code ever used, so never reuse or
         // lower it. See RELEASING.md before changing it.
-        versionCode = 6
-        versionName = "0.4.0"
+        versionCode = 7
+        versionName = "0.4.1"
     }
 
     signingConfigs {
@@ -37,16 +36,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions { jvmTarget = "17" }
 }
 
 // APKs are named still-time-<versionName>-<variant>.apk
 base.archivesName.set(provider { "still-time-${android.defaultConfig.versionName}" })
 
 dependencies {
-    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui")
-    implementation("androidx.activity:activity-compose:1.9.3")
-    implementation("com.google.android.gms:play-services-wearable:18.2.0")
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.core:core-ktx:1.19.1")
+    implementation("com.google.android.gms:play-services-wearable:20.0.1")
 }

@@ -2,7 +2,6 @@ package org.comichao.stilltime.wear
 
 import android.app.Activity
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -48,6 +47,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.delay
+import androidx.core.net.toUri
 
 private const val STATE = "/stilltime/state"
 private const val START = "/stilltime/start"
@@ -113,7 +113,7 @@ private fun Watch(ambient: Boolean, tick: Long) {
         }
         data.addListener(dataListener)
         // Show the last state we have, even before the phone answers.
-        data.getDataItems(Uri.parse("wear://*$STATE")).addOnSuccessListener { items ->
+        data.getDataItems("wear://*$STATE".toUri()).addOnSuccessListener { items ->
             items.forEach { state = DataMapItem.fromDataItem(it).dataMap.toState() }
             items.release()
         }
