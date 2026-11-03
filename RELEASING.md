@@ -46,7 +46,7 @@ Rules:
 
 ### Codes already used in Play (never reuse)
 
-- `org.comichao.stilltime`: none yet. Next free phone code: `6` (watch `1006`).
+- `org.comichao.stilltime`: `6` and `1006` (0.4.0), `7` and `1007` (0.4.1, uploaded 2026-11-02 to Closed testing - Alpha, phone and Wear OS). Next free phone code: `8` (watch `1008`).
 - `org.comichao.pomodoro` (old app): `4` and `1004` (0.3.0), `5` and `1005` (0.3.1).
 
 Add each code after it is uploaded.
