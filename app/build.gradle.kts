@@ -13,8 +13,8 @@ android {
         targetSdk = 37
         // A plain counter that `make bump` adds 1 to. Play remembers every code ever used, so never reuse or
         // lower it. See RELEASING.md before changing it.
-        versionCode = 8
-        versionName = "0.4.2"
+        versionCode = 9
+        versionName = "0.4.3"
     }
 
     signingConfigs {
