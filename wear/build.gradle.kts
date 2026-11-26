@@ -35,6 +35,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // -PidSuffix=.debug installs a copy next to the Play one (its own id and data); give the phone the same suffix.
+            (project.findProperty("idSuffix") as String?)?.let { applicationIdSuffix = it }
+        }
         release { signingConfig = signingConfigs.getByName("release") }
     }
 
@@ -54,6 +58,8 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.7.1")
     implementation("androidx.wear.compose:compose-foundation:1.7.1")
     implementation("androidx.activity:activity-compose:1.13.0")
+    // Play flags fragment 1.1.0 as outdated; play-services-wearable pulls it in transitively, so pin a current one.
+    implementation("androidx.fragment:fragment:1.8.9")
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.wear:wear:1.4.0")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")

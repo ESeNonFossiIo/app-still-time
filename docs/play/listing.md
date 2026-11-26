@@ -31,7 +31,7 @@ KNOW YOUR HABITS
 
 ON YOUR WRIST (WEAR OS)
 • See the timer and tag from your phone on your watch
-• Start a session, give up or take a break from the watch
+• Start a session, give up or finish it from the watch
 • Works with Wear OS 3 and newer
 
 PRIVATE BY DESIGN

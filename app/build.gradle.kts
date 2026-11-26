@@ -13,8 +13,8 @@ android {
         targetSdk = 37
         // A plain counter that `make bump` adds 1 to. Play remembers every code ever used, so never reuse or
         // lower it. See RELEASING.md before changing it.
-        versionCode = 7
-        versionName = "0.4.1"
+        versionCode = 8
+        versionName = "0.4.2"
     }
 
     signingConfigs {
@@ -28,6 +28,10 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // -PidSuffix=.debug installs a copy next to the Play one (its own id and data); give the watch the same suffix.
+            (project.findProperty("idSuffix") as String?)?.let { applicationIdSuffix = it }
+        }
         release { signingConfig = signingConfigs.getByName("release") }
     }
 
@@ -47,6 +51,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.activity:activity-compose:1.13.0")
+    // Play flags fragment 1.1.0 as outdated; Google libraries pull it in transitively, so pin a current one.
+    implementation("androidx.fragment:fragment:1.8.9")
     implementation("androidx.core:core-ktx:1.19.1")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")   // the real org.json, since Android's is not available in unit tests
 }

@@ -52,9 +52,11 @@ import androidx.core.net.toUri
 private const val STATE = "/stilltime/state"
 private const val START = "/stilltime/start"
 private const val STOP = "/stilltime/stop"
-private const val BREAK = "/stilltime/break"
 private const val SYNC = "/stilltime/sync"
 private const val PHONE_CAPABILITY = "stilltime_phone"
+
+/** " 2/8" while a routine runs, else nothing. */
+private fun stepOf(s: TimerState) = if (s.routineSteps > 0) " ${s.routineStep}/${s.routineSteps}" else ""
 
 /** What the phone last told us. The phone owns the timer. */
 private data class TimerState(
@@ -63,6 +65,9 @@ private data class TimerState(
     val totalMs: Long,
     val category: String,
     val minutes: Int,
+    /** A routine is running: this is step [routineStep] of [routineSteps] (both 0 when none is). */
+    val routineStep: Int = 0,
+    val routineSteps: Int = 0,
 )
 
 private fun DataMap.toState() = TimerState(
@@ -71,6 +76,8 @@ private fun DataMap.toState() = TimerState(
     totalMs = getLong("totalMs"),
     category = getString("category", ""),
     minutes = getInt("minutes", 25),
+    routineStep = getInt("routineStep", 0),
+    routineSteps = getInt("routineSteps", 0),
 )
 
 class MainActivity : ComponentActivity() {
@@ -195,9 +202,9 @@ private fun Watch(ambient: Boolean, tick: Long) {
                     Text(
                         when {
                             !connected -> "Phone offline"
-                            phase == "BREAK" -> "Break"
+                            phase == "BREAK" -> "Break" + stepOf(s)
                             phase == "DONE" -> "Done · " + s.category.ifEmpty { "focus" }
-                            phase == "FOCUS" -> s.category.ifEmpty { "Focus" }
+                            phase == "FOCUS" -> s.category.ifEmpty { "Focus" } + stepOf(s)
                             else -> s.category.ifEmpty { "Ready" }
                         },
                         style = MaterialTheme.typography.caption1,
@@ -212,12 +219,12 @@ private fun Watch(ambient: Boolean, tick: Long) {
                     )
                     if (!ambient) Chip(
                         onClick = {
-                            send(c, phoneNodes, when (phase) { "IDLE" -> START; "DONE" -> BREAK; else -> STOP })
+                            send(c, phoneNodes, when (phase) { "IDLE" -> START; else -> STOP })
                         },
                         enabled = connected,
                         label = {
                             Text(
-                                when (phase) { "IDLE" -> "Start"; "FOCUS" -> "Give up"; "DONE" -> "Break"; else -> "Skip" },
+                                when (phase) { "IDLE" -> "Start"; "FOCUS" -> "Give up"; "DONE" -> "Done"; else -> "Skip" },
                                 Modifier.fillMaxSize(),
                                 textAlign = TextAlign.Center,
                             )

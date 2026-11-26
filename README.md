@@ -49,14 +49,22 @@ won't update over it. To keep your history, open **Menu > Stats > Export CSV** b
 
 ## How to use it
 
-- **Start.** Choose the focus length (5 to 120 minutes) and break length (5 to 30 minutes) with the **−5** and
-  **+5** buttons, pick a tag, and tap **Start focus**. To add a tag use **+ New**; to remove one tap **Edit**,
+- **Start.** Choose the focus length (5 to 120 minutes) with the **−5** and
+  **+5** buttons (a single session is focus only; breaks belong to routines), pick a tag, and tap **Start focus**. To add a tag use **+ New**; to remove one tap **Edit**,
   then the tag.
+- **Routines.** Switch **Single** to **Routine** above the timer to run a whole sequence in one go, for example
+  25 minutes of focus, 5 of break, 25 of focus, 5 of break. A routine moves from one step to the next by itself, with
+  an alert at each change, and ends with a "routine complete" alert. Each focus step is logged as a session. A bar
+  under the ring shows the steps with the current one bright, and what comes next; **Skip break** jumps ahead and
+  **Give up** stops the routine (the focus step you were in is logged as given up). **Menu > Routines** (or **Manage
+  routines** on the home screen) is where you make them: a name, the steps (focus or break, any length from 1 to 180
+  minutes, in any order), how many rounds to run them, and the category the focus steps are logged under. The
+  **Add a preset** button offers a classic Pomodoro (four 25-minute focuses with breaks and a long one at the end),
+  Deep work (50/10 three times) and Short sprints (15/5 four times). The watch shows the step number (for example 3/8).
 - **During focus.** The screen shows a ring that fills as time passes, and notifications are held back. They
   come back when the session ends. Tap **Give up** to stop early; a session you give up on doesn't count
   towards your streak.
-- **When it ends.** The screen inverts and the timer keeps counting up (`+mm:ss`) until you tap. Choose
-  **Start break** or **Done**.
+- **When it ends.** The screen inverts and the timer keeps counting up (`+mm:ss`) until you tap **Done**.
 - **Which apps can interrupt.** In **Menu > Apps allowed during focus**, tick the apps whose notifications
   should never be held back. Your phone and messaging apps are allowed by default. You can search the list.
 - **Stats.** **Menu > Stats and session log** shows your totals, the last 14 days, time per tag and every
@@ -72,7 +80,7 @@ won't update over it. To keep your history, open **Menu > Stats > Export CSV** b
 
 The watch app works with Wear OS 3 or newer (Pixel Watch, Galaxy Watch 4 and later, and others). It needs the
 phone app, and both devices need Google Play services. It shows the timer and tag from your phone and has
-**Start**, **Give up** and **Break** buttons. If the phone is out of reach, the watch says so and disables the
+**Start**, **Give up** and **Done** buttons. If the phone is out of reach, the watch says so and disables the
 buttons. The screen stays on while the app is open, so the timer doesn't drop back to the watch face; close
 the app to let the watch sleep again. With Always-on display turned on, the timer is shown dimmed instead.
 

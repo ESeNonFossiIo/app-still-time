@@ -116,21 +116,26 @@ private fun App(mode: ThemeMode, phase: Phase, onMode: (ThemeMode) -> Unit) {
             BackHandler { screen = Screen.Settings }
             StatsScreen(onBack = { screen = Screen.Settings })
         }
+        screen == Screen.Routines -> {
+            BackHandler { screen = Screen.Home }
+            RoutinesScreen(onBack = { screen = Screen.Home })
+        }
         screen == Screen.Settings -> {
             BackHandler { screen = Screen.Home }
             SettingsScreen(
                 onBack = { screen = Screen.Home },
                 onStats = { screen = Screen.Stats },
                 onApps = { screen = Screen.Apps },
+                onRoutines = { screen = Screen.Routines },
                 mode = mode,
                 onMode = onMode,
             )
         }
-        else -> HomeScreen(onSettings = { screen = Screen.Settings })
+        else -> HomeScreen(onSettings = { screen = Screen.Settings }, onRoutines = { screen = Screen.Routines })
     }
 }
 
-private enum class Screen { Home, Apps, Settings, Stats }
+private enum class Screen { Home, Apps, Settings, Stats, Routines }
 
 private fun pinningEnabled(c: Context) = runCatching {
     Settings.System.getInt(c.contentResolver, "lock_to_app_enabled", 0) == 1 ||
@@ -139,7 +144,7 @@ private fun pinningEnabled(c: Context) = runCatching {
 
 /** Back arrow, title and optional actions, over a thin divider. */
 @Composable
-private fun ScreenHeader(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
+internal fun ScreenHeader(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
     Column {
         Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
@@ -152,7 +157,7 @@ private fun ScreenHeader(title: String, onBack: () -> Unit, actions: @Composable
 
 /** Small coloured label that starts a group of rows. */
 @Composable
-private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
+internal fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text.uppercase(),
         modifier.padding(top = 20.dp, bottom = 4.dp),
@@ -184,7 +189,7 @@ private fun appVersion(c: Context) = runCatching {
 
 @Composable
 private fun SettingsScreen(
-    onBack: () -> Unit, onStats: () -> Unit, onApps: () -> Unit,
+    onBack: () -> Unit, onStats: () -> Unit, onApps: () -> Unit, onRoutines: () -> Unit,
     mode: ThemeMode, onMode: (ThemeMode) -> Unit,
 ) {
     val c = LocalContext.current
@@ -193,6 +198,7 @@ private fun SettingsScreen(
     Column(Modifier.fillMaxSize().systemBarsPadding()) {
         ScreenHeader("Menu", onBack)
         MenuItem("Stats and session log", "Totals, categories, history and CSV export", onStats)
+        MenuItem("Routines", "Focus and break steps that run one after another", onRoutines)
         MenuItem("Apps allowed during focus", "Their notifications are never snoozed", onApps)
         SectionHeader("Focus mode", Modifier.padding(horizontal = 16.dp))
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -333,11 +339,8 @@ private fun PhaseButton(phase: Phase) {
     when (phase) {
         Phase.IDLE -> Button(onClick = { Timer.start(c) }) { Text("Start focus") }
         Phase.FOCUS -> OutlinedButton(onClick = { Timer.stop(c) }) { Text("Give up") }
-        Phase.BREAK -> OutlinedButton(onClick = { Timer.stop(c) }) { Text("Skip break") }
-        Phase.DONE -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Button(onClick = { Timer.startBreak(c) }) { Text("Start ${Timer.currentBreakMinutes(c)} min break") }
-            TextButton(onClick = { Timer.stop(c) }) { Text("Done") }
-        }
+        Phase.BREAK -> OutlinedButton(onClick = { if (Timer.inRoutine(c)) Timer.skipStep(c) else Timer.stop(c) }) { Text("Skip break") }
+        Phase.DONE -> Button(onClick = { Timer.stop(c) }) { Text("Done") }
     }
 }
 
@@ -353,10 +356,32 @@ private fun clockText(c: Context, phase: Phase, now: Long, idleMinutes: Int): St
     return (if (phase == Phase.DONE) "+" else "") + "%02d:%02d".format(secs / 60, secs % 60)
 }
 
+/** "Step 3 of 8 · " while a routine runs, else nothing. */
+private fun routinePrefix(c: Context) =
+    if (Timer.inRoutine(c)) "Step ${Timer.routineIndex(c) + 1} of ${Timer.routineSteps(c).size} · " else ""
+
+/** While a routine runs: its steps as a bar with the current one bright, and what comes next. */
+@Composable
+private fun RoutineProgress() {
+    val c = LocalContext.current
+    if (!Timer.inRoutine(c)) return
+    val steps = Timer.routineSteps(c)
+    Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(Timer.routineName(c), style = MaterialTheme.typography.labelMedium)
+        Spacer(Modifier.height(6.dp))
+        StepStrip(steps, Timer.routineIndex(c))
+        Spacer(Modifier.height(6.dp))
+        Text(
+            Timer.nextStep(c)?.let { "Next: ${it.kind.label.lowercase()} ${it.minutes} min" } ?: "Last step",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
 private fun phaseLabel(c: Context, phase: Phase) = when (phase) {
     Phase.IDLE -> "Ready"
-    Phase.FOCUS -> "Focus · ${Timer.currentCategory(c).ifEmpty { "Uncategorized" }}"
-    Phase.BREAK -> "Break"
+    Phase.FOCUS -> routinePrefix(c) + "Focus · ${Timer.currentCategory(c).ifEmpty { "Uncategorized" }}"
+    Phase.BREAK -> routinePrefix(c) + "Break"
     Phase.DONE -> "Focus complete · ${Timer.currentCategory(c).ifEmpty { "Uncategorized" }}"
 }
 
@@ -392,21 +417,26 @@ private fun FullscreenScreen() {
         Text(phaseLabel(c, phase), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
         TimerRing(Timer.progress(c, now), 300.dp, clockText(c, phase, now, Timer.minutes(c)), 80.sp)
+        Spacer(Modifier.height(16.dp))
+        RoutineProgress()
         Spacer(Modifier.height(24.dp))
         PhaseButton(phase)
     }
 }
 
 @Composable
-private fun HomeScreen(onSettings: () -> Unit) {
+private fun HomeScreen(onSettings: () -> Unit, onRoutines: () -> Unit) {
     val c = LocalContext.current
     val now = rememberNow()
     var minutes by remember { mutableIntStateOf(Timer.minutes(c)) }
-    var breakMin by remember { mutableIntStateOf(Timer.breakMinutes(c)) }
     var category by remember { mutableStateOf(Timer.category(c)) }
     var categories by remember { mutableStateOf(Timer.categories(c)) }
     var adding by remember { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+    var useRoutine by remember { mutableStateOf(Timer.useRoutine(c)) }
+    var routineMenu by remember { mutableStateOf(false) }
+    val routines = remember { Routines.list(c) }
+    var routine by remember { mutableStateOf(Timer.selectedRoutine(c)) }
     val phase = Timer.phase(c)
     val stats = remember(phase) { History.stats(c) }
 
@@ -441,25 +471,56 @@ private fun HomeScreen(onSettings: () -> Unit) {
         val phaseColor = if (phase == Phase.BREAK) breakColor else focusColor
         Text(phaseLabel(c, phase), style = MaterialTheme.typography.titleMedium, color = phaseColor, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(12.dp))
-        // The circle is the main control: tapping it starts a focus session (or the break once focus is done).
+        // The circle is the main control: tapping it starts a focus session (or closes it once focus is done).
         TimerRing(
-            Timer.progress(c, now), 240.dp, clockText(c, phase, now, minutes), 60.sp,
+            Timer.progress(c, now),
+            240.dp, clockText(c, phase, now, if (useRoutine) routine?.expanded?.firstOrNull()?.minutes ?: minutes else minutes), 60.sp,
             barColor = phaseColor,
-            caption = when (phase) { Phase.IDLE -> "Start focus"; Phase.DONE -> "Start break"; else -> null },
+            caption = when (phase) { Phase.IDLE -> if (useRoutine && routine != null) "Start routine" else "Start focus"; Phase.DONE -> "Done"; else -> null },
             onClick = when (phase) {
-                Phase.IDLE -> ({ Timer.start(c) })
-                Phase.DONE -> ({ Timer.startBreak(c) })
+                Phase.IDLE -> ({ routine?.takeIf { useRoutine }?.let { Timer.startRoutine(c, it) } ?: Timer.start(c) })
+                Phase.DONE -> ({ Timer.stop(c) })
                 else -> null
             },
         )
         Spacer(Modifier.height(16.dp))
         if (phase == Phase.IDLE) {
+            // One focus session with the length below, or a routine: steps that run one after another.
+            SingleChoiceSegmentedButtonRow {
+                SegmentedButton(!useRoutine, { useRoutine = false; Timer.setUseRoutine(c, false) }, SegmentedButtonDefaults.itemShape(0, 2)) { Text("Single") }
+                SegmentedButton(useRoutine, { useRoutine = true; Timer.setUseRoutine(c, true) }, SegmentedButtonDefaults.itemShape(1, 2)) { Text("Routine") }
+            }
+            Spacer(Modifier.height(16.dp))
+        }
+        if (phase == Phase.IDLE && useRoutine) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box {
+                    FilledTonalButton(onClick = { routineMenu = true }, enabled = routines.isNotEmpty()) {
+                        Text(routine?.name ?: "No routines", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+                    }
+                    DropdownMenu(routineMenu, { routineMenu = false }) {
+                        routines.forEach { r ->
+                            DropdownMenuItem(
+                                text = { Column { Text(r.name); Text(r.summary, style = MaterialTheme.typography.bodySmall) } },
+                                onClick = { routine = r; Timer.selectRoutine(c, r.name); routineMenu = false },
+                            )
+                        }
+                    }
+                }
+                routine?.let { r ->
+                    Spacer(Modifier.height(8.dp))
+                    Text(r.summary, style = MaterialTheme.typography.bodySmall)
+                    Spacer(Modifier.height(8.dp))
+                    StepStrip(r.expanded, modifier = Modifier.padding(horizontal = 24.dp))
+                }
+                TextButton(onClick = onRoutines) { Text(if (routines.isEmpty()) "Create a routine" else "Manage routines") }
+            }
+        }
+        if (phase == Phase.IDLE && !useRoutine) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 LengthPicker("Focus", minutes, Timer.MIN_MINUTES, Timer.MAX_MINUTES, focusColor) {
                     minutes = it; Timer.setMinutes(c, it)
-                }
-                LengthPicker("Break", breakMin, Timer.MIN_BREAK, Timer.MAX_BREAK, breakColor) {
-                    breakMin = it; Timer.setBreakMinutes(c, it)
                 }
             }
             Spacer(Modifier.height(16.dp))
@@ -492,6 +553,8 @@ private fun HomeScreen(onSettings: () -> Unit) {
         }
         // Idle needs no button: the circle starts the session.
         if (phase != Phase.IDLE) {
+            Spacer(Modifier.height(12.dp))
+            RoutineProgress()
             Spacer(Modifier.height(16.dp))
             PhaseButton(phase)
         }

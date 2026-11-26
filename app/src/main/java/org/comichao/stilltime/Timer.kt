@@ -11,8 +11,6 @@ enum class Phase { IDLE, FOCUS, BREAK, DONE }
 
 /** Timer state lives in SharedPreferences so the UI, alarm and listener all agree. */
 object Timer {
-    const val MIN_BREAK = 5
-    const val MAX_BREAK = 30
     const val MIN_MINUTES = 5
     const val MAX_MINUTES = 120
     val DEFAULT_CATEGORIES = listOf("Work", "Study", "Reading", "Other")
@@ -60,14 +58,7 @@ object Timer {
     fun setHidePinWarning(c: Context, hide: Boolean) =
         prefs(c).edit { putBoolean("hidePinWarning", hide) }
 
-    /** Selected break length, used after the next focus session. */
-    fun breakMinutes(c: Context) = prefs(c).getInt("breakMinutes", 5)
-    fun setBreakMinutes(c: Context, m: Int) {
-        prefs(c).edit { putInt("breakMinutes", m.coerceIn(MIN_BREAK, MAX_BREAK)) }
-        WearSync.publish(c)
-    }
-
-    /** Length of the break that follows the session in progress. */
+    /** Length of the break in progress (only routines have breaks; a single session is focus only). */
     fun currentBreakMinutes(c: Context) = prefs(c).getInt("curBreakMinutes", 5)
 
     /** Selected category, used by the next session. */
@@ -112,14 +103,28 @@ object Timer {
 
     @Synchronized
     fun start(c: Context) {
+        clearRoutine(c)
         val ms = minutes(c) * 60_000L
-        prefs(c).edit { putString("curCategory", category(c)); putLong("curMs", ms); putInt("curBreakMinutes", breakMinutes(c)) }
+        prefs(c).edit { putString("curCategory", category(c)); putLong("curMs", ms) }
         set(c, Phase.FOCUS, System.currentTimeMillis() + ms)
     }
 
     /** Giving up logs the session as abandoned; it does not count towards the home stats. */
     @Synchronized
     fun stop(c: Context) {
+        if (inRoutine(c)) {
+            // Settle first, so a step that just ended is logged as done; then only a focus step still running is given up.
+            settle(c)
+            if (phase(c) == Phase.FOCUS) {
+                val now = System.currentTimeMillis()
+                val ms = prefs(c).getLong("curMs", 25 * 60_000L)
+                val elapsed = (now - (endAt(c) - ms)) / 1000
+                if (elapsed > 0) History.add(c, now, currentCategory(c), (ms / 60_000).toInt(), elapsed, false)
+            }
+            clearRoutine(c)
+            set(c, Phase.IDLE, 0)
+            return
+        }
         if (phase(c) == Phase.FOCUS) {
             // Time already ran out: settle() records it as completed and moves to DONE.
             if (settle(c) != null) return
@@ -132,12 +137,14 @@ object Timer {
     }
 
     /**
-     * Advances finished phases (focus -> break -> idle), recording completed focus sessions.
+     * Advances finished phases (a single focus session waits as DONE until you tap Done; a routine's break leads to idle),
+     * recording completed focus sessions.
      * Returns the first phase that ended, or null if nothing did.
      */
     @Synchronized
     fun settle(c: Context): Phase? {
         val now = System.currentTimeMillis()
+        if (inRoutine(c)) return settleRoutine(c, now)
         val end = endAt(c)
         when (phase(c)) {
             Phase.FOCUS -> if (now >= end) {
@@ -156,11 +163,102 @@ object Timer {
         return null
     }
 
-    /** After a finished focus session: start the break now (not when the focus ended). */
+    // ---- Routines: steps that run one after another, see Routines.kt ----------------------------------------------------
+
+    /** Whether the home screen starts a routine (true) or a single focus session (false). */
+    fun useRoutine(c: Context) = prefs(c).getBoolean("useRoutine", false)
+    fun setUseRoutine(c: Context, on: Boolean) = prefs(c).edit { putBoolean("useRoutine", on) }
+
+    /** The routine the home screen will start (its name; the first one if that was deleted). */
+    fun selectedRoutine(c: Context): Routine? {
+        val all = Routines.list(c)
+        return all.firstOrNull { it.name == prefs(c).getString("routine", null) } ?: all.firstOrNull()
+    }
+    fun selectRoutine(c: Context, name: String) = prefs(c).edit { putString("routine", name) }
+
+    /** A routine is running (its steps, the position in them and its name are saved with the timer). */
+    fun inRoutine(c: Context) = !prefs(c).getString("rtSteps", "").isNullOrEmpty()
+    fun routineSteps(c: Context): List<Step> = RoutineCodec.decodeSteps(prefs(c).getString("rtSteps", "")!!)
+    fun routineIndex(c: Context) = prefs(c).getInt("rtIndex", 0)
+    fun routineName(c: Context) = prefs(c).getString("rtName", "")!!
+
+    /** Name of a routine that has just run to the end, and when; the alert says so once. */
+    fun routineFinished(c: Context): String? =
+        prefs(c).getString("rtDoneName", null)?.takeIf { System.currentTimeMillis() - prefs(c).getLong("rtDoneAt", 0) < 60_000 }
+
+    /** The step after the current one, or null on the last. */
+    fun nextStep(c: Context): Step? = routineSteps(c).getOrNull(routineIndex(c) + 1)
+
     @Synchronized
-    fun startBreak(c: Context) {
-        if (phase(c) == Phase.DONE) {
-            set(c, Phase.BREAK, System.currentTimeMillis() + currentBreakMinutes(c) * 60_000L)
+    fun startRoutine(c: Context, r: Routine) {
+        val steps = r.expanded
+        if (steps.isEmpty()) return
+        prefs(c).edit {
+            putString("rtSteps", RoutineCodec.encodeSteps(steps)); putInt("rtIndex", 0); putString("rtName", r.name)
+            putString("curCategory", r.category ?: category(c)); remove("rtDoneName")
+        }
+        beginStep(c, steps[0], System.currentTimeMillis())
+    }
+
+    /** Skip the break in progress and start the next step now. */
+    @Synchronized
+    fun skipStep(c: Context) {
+        if (!inRoutine(c) || phase(c) != Phase.BREAK) return
+        val now = System.currentTimeMillis()
+        goTo(c, routineSteps(c), routineIndex(c) + 1, now)
+    }
+
+    private fun beginStep(c: Context, step: Step, startAt: Long) {
+        if (step.kind == StepKind.FOCUS) {
+            prefs(c).edit { putLong("curMs", step.ms) }
+            set(c, Phase.FOCUS, startAt + step.ms)
+        } else {
+            prefs(c).edit { putInt("curBreakMinutes", step.minutes) }
+            set(c, Phase.BREAK, startAt + step.ms)
+        }
+    }
+
+    /** Begin step [index] at [startAt], or finish the routine when there is none left. */
+    private fun goTo(c: Context, steps: List<Step>, index: Int, startAt: Long) {
+        if (index >= steps.size) {
+            val name = routineName(c)
+            clearRoutine(c)
+            prefs(c).edit { putString("rtDoneName", name); putLong("rtDoneAt", System.currentTimeMillis()) }
+            set(c, Phase.IDLE, 0)
+        } else {
+            prefs(c).edit { putInt("rtIndex", index) }
+            beginStep(c, steps[index], startAt)
+        }
+    }
+
+    private fun clearRoutine(c: Context) = prefs(c).edit { remove("rtSteps"); remove("rtIndex"); remove("rtName"); remove("rtDoneName") }
+
+    /** A step ended: log the focus ones, then move on to whatever the clock says is current. Returns the phase that ended first. */
+    private fun settleRoutine(c: Context, now: Long): Phase? {
+        val ended = phase(c)
+        if ((ended != Phase.FOCUS && ended != Phase.BREAK) || now < endAt(c)) return null
+        val steps = routineSteps(c)
+        val index = routineIndex(c)
+        val p = catchUp(steps, index, endAt(c) - steps[index].ms, now)
+        p.finished.forEach { History.add(c, it.endedAt, currentCategory(c), it.minutes, it.minutes * 60L, true) }
+        goTo(c, steps, p.index, p.stepStart)
+        return ended
+    }
+
+    /** What to say when a step ends: the one that follows, or that the routine is over. Null if there is nothing to say. */
+    fun alertText(c: Context, ended: Phase): String? {
+        routineFinished(c)?.let { return "Routine complete: $it. Well done." }
+        if (inRoutine(c)) {
+            val i = routineIndex(c)
+            val steps = routineSteps(c)
+            val step = steps.getOrNull(i) ?: return null
+            return (if (ended == Phase.FOCUS) "Focus complete. " else "Break over. ") +
+                "Next: ${step.kind.label.lowercase()}, ${step.minutes} min (step ${i + 1} of ${steps.size})."
+        }
+        return when (ended) {
+            Phase.FOCUS -> "Focus complete."
+            Phase.BREAK -> "Break over."
+            else -> null
         }
     }
 

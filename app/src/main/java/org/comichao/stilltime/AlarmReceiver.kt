@@ -9,11 +9,8 @@ import android.content.Intent
 
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, intent: Intent) {
-        val text = when (Timer.settle(c)) {
-            Phase.FOCUS -> "Focus complete. Tap to start your ${Timer.currentBreakMinutes(c)} minute break."
-            Phase.BREAK -> "Break over."
-            else -> return
-        }
+        val ended = Timer.settle(c) ?: return
+        val text = Timer.alertText(c, ended) ?: return
         val nm = c.getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel("alerts", "Timer alerts", NotificationManager.IMPORTANCE_HIGH)

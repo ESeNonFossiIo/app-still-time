@@ -54,8 +54,8 @@ Other devkit targets: `make logcat`, `make logcat-save`, `make run`, `make clean
 ## Wear OS
 
 The phone owns the timer. It publishes its state as a Wearable Data Layer item (`/stilltime/state`: phase, end time,
-total length, category, focus and break minutes) every time it changes. The watch sends `/stilltime/start`,
-`/stilltime/stop`, `/stilltime/break` and `/stilltime/sync` messages back, and the phone applies them even when its UI isn't
+total length, category, focus minutes) every time it changes. The watch sends `/stilltime/start`,
+`/stilltime/stop` and `/stilltime/sync` messages back, and the phone applies them even when its UI isn't
 open. The phone declares a `stilltime_phone` capability so the watch can tell whether the phone app is installed
 and reachable. Both apps use the application id `org.comichao.stilltime` and must be signed with the same key.
 

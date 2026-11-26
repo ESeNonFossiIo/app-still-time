@@ -15,7 +15,6 @@ object WearSync {
     const val STATE = "/stilltime/state"
     const val START = "/stilltime/start"
     const val STOP = "/stilltime/stop"
-    const val BREAK = "/stilltime/break"
     const val SYNC = "/stilltime/sync"
 
     fun publish(c: Context) {
@@ -32,7 +31,9 @@ object WearSync {
                 dataMap.putLong("totalMs", total)
                 dataMap.putString("category", if (phase == Phase.IDLE) Timer.category(c) else Timer.currentCategory(c))
                 dataMap.putInt("minutes", Timer.minutes(c))
-                dataMap.putInt("breakMinutes", Timer.breakMinutes(c))
+                // A running routine: which step this is (1-based) and how many there are; 0 when there is none.
+                dataMap.putInt("routineStep", if (Timer.inRoutine(c)) Timer.routineIndex(c) + 1 else 0)
+                dataMap.putInt("routineSteps", if (Timer.inRoutine(c)) Timer.routineSteps(c).size else 0)
                 dataMap.putLong("sentAt", System.currentTimeMillis()) // makes every publish a change
             }.asPutDataRequest().setUrgent()
             Wearable.getDataClient(c.applicationContext).putDataItem(request)
@@ -47,7 +48,6 @@ class WearListener : WearableListenerService() {
         when (event.path) {
             WearSync.START -> if (Timer.phase(this) == Phase.IDLE) Timer.start(this)
             WearSync.STOP -> Timer.stop(this)
-            WearSync.BREAK -> Timer.startBreak(this)
             WearSync.SYNC -> WearSync.publish(this)
         }
     }

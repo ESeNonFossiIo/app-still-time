@@ -14,7 +14,7 @@ Still Time is published by Mauro Bardelloni. Contact: comichao.dev@gmail.com, or
 ## What the app stores
 
 - **Your sessions:** start time, length, tag and whether you finished or gave up.
-- **Your settings:** focus and break lengths, tags, theme, fullscreen mode, and the apps you allow to interrupt
+- **Your settings:** focus length, routines, tags, theme, fullscreen mode, and the apps you allow to interrupt
   a focus session.
 - **The current timer state,** so the phone, the alarm and the watch agree on it.
 
